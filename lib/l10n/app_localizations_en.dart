@@ -139,4 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectTimeSlot => 'Select a time slot';
+
+  @override
+  String get skipLogin => 'Skip (Demo / Test Mode)';
 }

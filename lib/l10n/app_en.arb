@@ -43,5 +43,6 @@
   "registrationSuccess": "Account created successfully!",
   "selectRoom": "Select a room",
   "selectDate": "Select a date",
-  "selectTimeSlot": "Select a time slot"
+  "selectTimeSlot": "Select a time slot",
+  "skipLogin": "Skip (Demo / Test Mode)"
 }

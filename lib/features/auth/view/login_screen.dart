@@ -88,6 +88,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                   ),
+                  SizedBox(height: AppSizes.v12),
+                  // Skip / Demo Mode button
+                  SizedBox(
+                    width: double.infinity,
+                    height: AppSizes.buttonHeight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const CustomerHomeScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.arrow_forward),
+                      label: Text(
+                        context.l10n.skipLogin,
+                        style: TextStyle(
+                          fontSize: AppFonts.bodyMedium,
+                          fontWeight: AppFonts.semiBold,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.r12),
+                        ),
+                      ),
+                    ),
+                  ),
                   SizedBox(height: AppSizes.v16),
                   Center(
                     child: TextButton(

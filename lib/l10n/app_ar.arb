@@ -43,5 +43,6 @@
   "registrationSuccess": "تم إنشاء الحساب بنجاح!",
   "selectRoom": "اختر غرفة",
   "selectDate": "اختر تاريخاً",
-  "selectTimeSlot": "اختر موعداً"
+  "selectTimeSlot": "اختر موعداً",
+  "skipLogin": "تخطي تسجيل الدخول (وضع تجريبي)"
 }

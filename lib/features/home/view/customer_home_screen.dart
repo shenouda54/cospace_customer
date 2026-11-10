@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cospace_customer/core/constants/app_sizes.dart';
+import 'package:cospace_customer/core/theme/theme_cubit.dart';
+import 'package:cospace_customer/core/utils/locale_cubit.dart';
 import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
 import 'package:cospace_customer/features/home/view_model/home_cubit.dart';
 import 'package:cospace_customer/features/home/view_model/home_state.dart';
@@ -30,6 +32,22 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.appTitle),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.theme,
+            icon: Icon(
+              context.watch<ThemeCubit>().isDark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+            onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+          ),
+          IconButton(
+            tooltip: context.l10n.language,
+            icon: const Icon(Icons.language),
+            onPressed: () => context.read<LocaleCubit>().toggleLocale(),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(

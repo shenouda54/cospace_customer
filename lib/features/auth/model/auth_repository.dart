@@ -14,6 +14,17 @@ class AuthRepository {
     required String password,
     required String phoneNumber,
   }) async {
+    if (!_firebase.isInitialized) {
+      final user = CustomerUserModel(
+        uid: 'demo_user_${DateTime.now().millisecondsSinceEpoch}',
+        fullName: fullName.isEmpty ? 'Demo Customer' : fullName,
+        email: email.isEmpty ? 'customer@cospace.com' : email,
+        phoneNumber: phoneNumber.isEmpty ? '+201000000000' : phoneNumber,
+      );
+      await _persistSession(user);
+      return user;
+    }
+
     final credential = await _firebase.auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -40,6 +51,17 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
+    if (!_firebase.isInitialized) {
+      final user = CustomerUserModel(
+        uid: 'demo_user_1',
+        fullName: 'Demo Customer',
+        email: email.isEmpty ? 'customer@cospace.com' : email,
+        phoneNumber: '+201000000000',
+      );
+      await _persistSession(user);
+      return user;
+    }
+
     final credential = await _firebase.auth.signInWithEmailAndPassword(
       email: email,
       password: password,
@@ -69,12 +91,10 @@ class AuthRepository {
   /// Persist user session data securely.
   Future<void> _persistSession(CustomerUserModel user) async {
     final token = await _firebase.currentUser?.getIdToken();
-    if (token != null) {
-      await SecureStorageHelper.write(
-        key: AppLocalKeys.userToken,
-        value: token,
-      );
-    }
+    await SecureStorageHelper.write(
+      key: AppLocalKeys.userToken,
+      value: token ?? 'demo_token_${user.uid}',
+    );
     await SecureStorageHelper.write(
       key: AppLocalKeys.userId,
       value: user.uid,

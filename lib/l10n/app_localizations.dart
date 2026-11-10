@@ -361,6 +361,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select a time slot'**
   String get selectTimeSlot;
+
+  /// No description provided for @skipLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip (Demo / Test Mode)'**
+  String get skipLogin;
 }
 
 class _AppLocalizationsDelegate

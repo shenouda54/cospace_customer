@@ -139,4 +139,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get selectTimeSlot => 'اختر موعداً';
+
+  @override
+  String get skipLogin => 'تخطي تسجيل الدخول (وضع تجريبي)';
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cospace_customer/core/constants/app_constants.dart';
 
 /// Centralized Firebase references.
@@ -8,11 +9,27 @@ class FirebaseService {
   FirebaseService._();
   static final FirebaseService instance = FirebaseService._();
 
-  final FirebaseAuth auth = FirebaseAuth.instance;
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  /// Checks if Firebase has been initialized successfully.
+  bool get isInitialized {
+    try {
+      return Firebase.apps.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
 
-  /// Current authenticated user, or null if not signed in.
-  User? get currentUser => auth.currentUser;
+  FirebaseAuth get auth => FirebaseAuth.instance;
+  FirebaseFirestore get firestore => FirebaseFirestore.instance;
+
+  /// Current authenticated user, or null if not signed in or not initialized.
+  User? get currentUser {
+    if (!isInitialized) return null;
+    try {
+      return auth.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Whether a user session is active.
   bool get isAuthenticated => currentUser != null;

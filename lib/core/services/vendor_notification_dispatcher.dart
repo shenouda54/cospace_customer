@@ -7,8 +7,6 @@ class VendorNotificationDispatcher {
   static final VendorNotificationDispatcher instance =
       VendorNotificationDispatcher._();
 
-  final _firestore = FirebaseService.instance.firestore;
-
   /// Writes a notification document that the Vendor app listens to.
   Future<void> dispatchBookingNotification({
     required String venueId,
@@ -18,15 +16,21 @@ class VendorNotificationDispatcher {
     required String reservationDate,
     required String timeSlot,
   }) async {
-    await _firestore.collection('vendor_notifications').add({
-      'venueId': venueId,
-      'venueName': venueName,
-      'customerName': customerName,
-      'roomNumber': roomNumber,
-      'reservationDate': reservationDate,
-      'timeSlot': timeSlot,
-      'createdAt': FieldValue.serverTimestamp(),
-      'isRead': false,
-    });
+    if (!FirebaseService.instance.isInitialized) return;
+
+    try {
+      await FirebaseService.instance.firestore
+          .collection('vendor_notifications')
+          .add({
+        'venueId': venueId,
+        'venueName': venueName,
+        'customerName': customerName,
+        'roomNumber': roomNumber,
+        'reservationDate': reservationDate,
+        'timeSlot': timeSlot,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    } catch (_) {}
   }
 }

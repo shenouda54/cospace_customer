@@ -14,6 +14,9 @@ class SlotAlreadyBookedException implements Exception {
 class ReservationRepository {
   final _firebase = FirebaseService.instance;
 
+  // Local in-memory store for demo / offline preview
+  static final List<ReservationModel> _inMemoryReservations = [];
+
   /// Atomically book a room using a Firestore Transaction.
   /// Throws [SlotAlreadyBookedException] if the slot is taken.
   Future<void> bookRoomInRealTime(ReservationModel reservation) async {
@@ -27,6 +30,17 @@ class ReservationRepository {
       AppConstants.dailyFixedTimeSlots.contains(reservation.timeSlot),
       'Invalid time slot: ${reservation.timeSlot}',
     );
+
+    if (!_firebase.isInitialized) {
+      final exists = _inMemoryReservations.any(
+        (r) => r.uniqueSlotLockId == reservation.uniqueSlotLockId,
+      );
+      if (exists) {
+        throw const SlotAlreadyBookedException();
+      }
+      _inMemoryReservations.add(reservation);
+      return;
+    }
 
     final docRef = _firebase.reservationsRef.doc(reservation.uniqueSlotLockId);
 
@@ -44,13 +58,25 @@ class ReservationRepository {
     required String venueId,
     required String reservationDate,
   }) {
-    return _firebase.reservationsRef
-        .where('venueId', isEqualTo: venueId)
-        .where('reservationDate', isEqualTo: reservationDate)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) =>
-                ReservationModel.fromJson({...doc.data(), 'id': doc.id}))
-            .toList());
+    if (!_firebase.isInitialized) {
+      final filtered = _inMemoryReservations
+          .where((r) =>
+              r.venueId == venueId && r.reservationDate == reservationDate)
+          .toList();
+      return Stream.value(filtered);
+    }
+
+    try {
+      return _firebase.reservationsRef
+          .where('venueId', isEqualTo: venueId)
+          .where('reservationDate', isEqualTo: reservationDate)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) =>
+                  ReservationModel.fromJson({...doc.data(), 'id': doc.id}))
+              .toList());
+    } catch (_) {
+      return Stream.value([]);
+    }
   }
 }
