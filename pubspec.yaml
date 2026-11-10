@@ -1,0 +1,53 @@
+name: cospace_customer
+description: "Co-Working Space & Meeting Room Reservation - Customer App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+  # State Management (MVVM + Cubit)
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+
+  # Firebase Core & Backend Services
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.2
+  cloud_firestore: ^5.6.7
+
+  # Local & Secure Storage
+  flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.5.3
+
+  # UI, Responsiveness & Visual Effects
+  flutter_screenutil: ^5.9.3
+  shimmer: ^3.0.0
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # To add custom fonts to your application, add a fonts section here:
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: assets/fonts/Roboto-Regular.ttf
+  #       - asset: assets/fonts/Roboto-Bold.ttf
+  #         weight: 700
