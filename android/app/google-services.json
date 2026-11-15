@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "839349701811",
+    "project_id": "cospacecustomer",
+    "storage_bucket": "cospacecustomer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:839349701811:android:52d9036d6e468ccc0d74c6",
+        "android_client_info": {
+          "package_name": "com.example.cospace_customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXne8-fppuOIb08O24VursLOt1QhCe4V4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
