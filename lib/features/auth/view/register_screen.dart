@@ -6,7 +6,6 @@ import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_cubit.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_state.dart';
 import 'package:cospace_customer/features/auth/widgets/auth_form_fields.dart';
-import 'package:cospace_customer/features/home/view/customer_home_screen.dart';
 import 'package:cospace_customer/shared/custom_button.dart';
 
 /// Registration screen for new customers.
@@ -47,66 +46,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            context.showSnackBar(context.l10n.registrationSuccess);
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (_) => const CustomerHomeScreen(),
-              ),
-              (route) => false,
-            );
-          } else if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
-          }
-        },
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsetsDirectional.symmetric(
-              horizontal: AppSizes.p24,
-              vertical: AppSizes.v48,
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.register,
-                    style: TextStyle(
-                      fontSize: AppFonts.heading1,
-                      fontWeight: AppFonts.bold,
-                      color: context.colorScheme.onSurface,
-                    ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsetsDirectional.symmetric(
+            horizontal: AppSizes.p24,
+            vertical: AppSizes.v48,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.register,
+                  style: TextStyle(
+                    fontSize: AppFonts.heading1,
+                    fontWeight: AppFonts.bold,
+                    color: context.colorScheme.onSurface,
                   ),
-                  SizedBox(height: AppSizes.v32),
-                  AuthFormFields(
-                    emailController: _emailController,
-                    passwordController: _passwordController,
-                    fullNameController: _fullNameController,
-                    phoneController: _phoneController,
-                    isRegister: true,
+                ),
+                SizedBox(height: AppSizes.v32),
+                AuthFormFields(
+                  emailController: _emailController,
+                  passwordController: _passwordController,
+                  fullNameController: _fullNameController,
+                  phoneController: _phoneController,
+                  isRegister: true,
+                  onSubmit: _onRegister,
+                ),
+                SizedBox(height: AppSizes.v32),
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    return CustomButton(
+                      text: context.l10n.register,
+                      isLoading: state is AuthLoading,
+                      onPressed: _onRegister,
+                    );
+                  },
+                ),
+                SizedBox(height: AppSizes.v16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.l10n.alreadyHaveAccount),
                   ),
-                  SizedBox(height: AppSizes.v32),
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, state) {
-                      return CustomButton(
-                        text: context.l10n.register,
-                        isLoading: state is AuthLoading,
-                        onPressed: _onRegister,
-                      );
-                    },
-                  ),
-                  SizedBox(height: AppSizes.v16),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(context.l10n.alreadyHaveAccount),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

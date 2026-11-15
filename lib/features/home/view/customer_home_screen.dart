@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cospace_customer/core/constants/app_icons.dart';
 import 'package:cospace_customer/core/constants/app_sizes.dart';
 import 'package:cospace_customer/core/theme/theme_cubit.dart';
 import 'package:cospace_customer/core/utils/locale_cubit.dart';
 import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
+import 'package:cospace_customer/features/auth/view_model/auth_cubit.dart';
 import 'package:cospace_customer/features/home/view_model/home_cubit.dart';
 import 'package:cospace_customer/features/home/view_model/home_state.dart';
 import 'package:cospace_customer/features/home/widgets/categories_horizontal_list.dart';
@@ -46,6 +48,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             tooltip: context.l10n.language,
             icon: const Icon(Icons.language),
             onPressed: () => context.read<LocaleCubit>().toggleLocale(),
+          ),
+          IconButton(
+            tooltip: context.l10n.logout,
+            icon: const Icon(AppIcons.logout),
+            onPressed: () => context.read<AuthCubit>().logout(),
           ),
         ],
       ),
@@ -109,7 +116,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   if (state is HomeLoaded) {
                     if (state.venues.isEmpty) {
                       return EmptyStateWidget(
-                        message: context.l10n.noVenuesAvailable,
+                        message: state.searchQuery.isEmpty
+                            ? context.l10n.noVenuesAvailable
+                            : context.l10n.noResultsFound,
                       );
                     }
 

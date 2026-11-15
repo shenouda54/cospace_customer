@@ -40,9 +40,17 @@
   "minSeatsReached": "Minimum 1 seat required.",
   "loginRequired": "Please login to continue.",
   "invalidCredentials": "Invalid email or password.",
+  "fieldRequired": "This field is required.",
+  "invalidEmail": "Enter a valid email address.",
+  "invalidPassword": "Password must be at least 6 characters.",
+  "invalidPhone": "Enter a valid phone number.",
+  "emailAlreadyInUse": "This email is already registered.",
+  "userDisabled": "This account has been disabled.",
+  "tooManyRequests": "Too many attempts. Try again later.",
+  "networkError": "Network error. Check your connection.",
+  "authFailed": "Something went wrong. Please try again.",
   "registrationSuccess": "Account created successfully!",
   "selectRoom": "Select a room",
   "selectDate": "Select a date",
-  "selectTimeSlot": "Select a time slot",
-  "skipLogin": "Skip (Demo / Test Mode)"
+  "selectTimeSlot": "Select a time slot"
 }

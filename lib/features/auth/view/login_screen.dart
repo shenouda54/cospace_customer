@@ -7,7 +7,6 @@ import 'package:cospace_customer/features/auth/view/register_screen.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_cubit.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_state.dart';
 import 'package:cospace_customer/features/auth/widgets/auth_form_fields.dart';
-import 'package:cospace_customer/features/home/view/customer_home_screen.dart';
 import 'package:cospace_customer/shared/custom_button.dart';
 
 /// Login screen for existing customers.
@@ -42,27 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => const CustomerHomeScreen(),
-              ),
-            );
-          } else if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
-          }
-        },
-        child: SafeArea(
-          child: Padding(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
             padding: EdgeInsetsDirectional.symmetric(
               horizontal: AppSizes.p24,
+              vertical: AppSizes.v32,
             ),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -77,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   AuthFormFields(
                     emailController: _emailController,
                     passwordController: _passwordController,
+                    onSubmit: _onLogin,
                   ),
                   SizedBox(height: AppSizes.v32),
                   BlocBuilder<AuthCubit, AuthState>(
@@ -87,34 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _onLogin,
                       );
                     },
-                  ),
-                  SizedBox(height: AppSizes.v12),
-                  // Skip / Demo Mode button
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeight,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) => const CustomerHomeScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.arrow_forward),
-                      label: Text(
-                        context.l10n.skipLogin,
-                        style: TextStyle(
-                          fontSize: AppFonts.bodyMedium,
-                          fontWeight: AppFonts.semiBold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.r12),
-                        ),
-                      ),
-                    ),
                   ),
                   SizedBox(height: AppSizes.v16),
                   Center(

@@ -1,82 +1,89 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cospace_customer/core/constants/app_constants.dart';
 import 'package:cospace_customer/core/services/firebase_service.dart';
-import 'package:cospace_customer/features/reservation/model/reservation_model.dart';
+import 'package:cospace_customer/features/reservation/model/booking_model.dart';
 
-/// Custom exception when a slot is already booked.
+/// Thrown when the same room, date, and time slot is already booked.
 class SlotAlreadyBookedException implements Exception {
   const SlotAlreadyBookedException();
-
-  @override
-  String toString() => 'This time slot is already booked.';
 }
 
-/// Repository for managing reservations with real-time concurrency control.
+/// Reads and writes the shared `bookings` collection.
 class ReservationRepository {
-  final _firebase = FirebaseService.instance;
+  ReservationRepository({FirebaseService? firebase})
+      : _firebase = firebase ?? FirebaseService.instance;
 
-  // Local in-memory store for demo / offline preview
-  static final List<ReservationModel> _inMemoryReservations = [];
+  final FirebaseService _firebase;
+  static final List<BookingModel> _localBookings = [];
 
-  /// Atomically book a room using a Firestore Transaction.
-  /// Throws [SlotAlreadyBookedException] if the slot is taken.
-  Future<void> bookRoomInRealTime(ReservationModel reservation) async {
-    // ── Server-side validation (Hostile Client Mindset) ──
-    assert(
-      reservation.seatsCount >= AppConstants.minSeatsPerRoom &&
-          reservation.seatsCount <= AppConstants.maxSeatsPerRoom,
-      'Seats must be between ${AppConstants.minSeatsPerRoom} and ${AppConstants.maxSeatsPerRoom}',
-    );
-    assert(
-      AppConstants.dailyFixedTimeSlots.contains(reservation.timeSlot),
-      'Invalid time slot: ${reservation.timeSlot}',
-    );
+  /// Books a room with a transaction so two customers cannot take the same slot.
+  Future<void> bookRoomInRealTime(BookingModel booking) async {
+    if (booking.customerId.isEmpty) {
+      throw ArgumentError('Customer must be logged in.');
+    }
+    if (booking.seatsCount < AppConstants.minSeatsPerRoom ||
+        booking.seatsCount > AppConstants.maxSeatsPerRoom) {
+      throw ArgumentError('Invalid seat count.');
+    }
+    if (!AppConstants.dailyFixedTimeSlots.contains(booking.timeSlot)) {
+      throw ArgumentError('Invalid time slot.');
+    }
+    if (booking.roomNumber < 1) {
+      throw ArgumentError('Invalid room number.');
+    }
+
+    final lockId = booking.uniqueSlotLockId;
 
     if (!_firebase.isInitialized) {
-      final exists = _inMemoryReservations.any(
-        (r) => r.uniqueSlotLockId == reservation.uniqueSlotLockId,
+      final taken = _localBookings.any((item) => item.uniqueSlotLockId == lockId);
+      if (taken) throw const SlotAlreadyBookedException();
+      _localBookings.add(
+        BookingModel(
+          id: lockId,
+          venueId: booking.venueId,
+          venueName: booking.venueName,
+          customerId: booking.customerId,
+          roomNumber: booking.roomNumber,
+          seatsCount: booking.seatsCount,
+          date: booking.date,
+          timeSlot: booking.timeSlot,
+          createdAt: DateTime.now(),
+        ),
       );
-      if (exists) {
-        throw const SlotAlreadyBookedException();
-      }
-      _inMemoryReservations.add(reservation);
       return;
     }
 
-    final docRef = _firebase.reservationsRef.doc(reservation.uniqueSlotLockId);
-
+    final docRef = _firebase.bookingsRef.doc(lockId);
     await _firebase.firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);
       if (snapshot.exists) {
         throw const SlotAlreadyBookedException();
       }
-      transaction.set(docRef, reservation.toJson());
+      transaction.set(docRef, {
+        ...booking.toJson(),
+        'id': lockId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 
-  /// Stream of reservations for a specific venue and date (real-time updates).
-  Stream<List<ReservationModel>> watchReservations({
-    required String venueId,
-    required String reservationDate,
-  }) {
+  /// Live bookings for one venue. Date and room are filtered by the cubit.
+  Stream<List<BookingModel>> watchVenueBookings({required String venueId}) {
     if (!_firebase.isInitialized) {
-      final filtered = _inMemoryReservations
-          .where((r) =>
-              r.venueId == venueId && r.reservationDate == reservationDate)
-          .toList();
-      return Stream.value(filtered);
+      final matches =
+          _localBookings.where((item) => item.venueId == venueId).toList();
+      return Stream.value(matches);
     }
 
-    try {
-      return _firebase.reservationsRef
-          .where('venueId', isEqualTo: venueId)
-          .where('reservationDate', isEqualTo: reservationDate)
-          .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) =>
-                  ReservationModel.fromJson({...doc.data(), 'id': doc.id}))
-              .toList());
-    } catch (_) {
-      return Stream.value([]);
-    }
+    return _firebase.bookingsRef
+        .where('venueId', isEqualTo: venueId)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => BookingModel.fromJson({...doc.data(), 'id': doc.id}),
+              )
+              .toList(),
+        );
   }
 }

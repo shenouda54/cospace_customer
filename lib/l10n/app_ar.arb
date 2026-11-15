@@ -40,9 +40,17 @@
   "minSeatsReached": "الحد الأدنى كرسي واحد.",
   "loginRequired": "يرجى تسجيل الدخول للمتابعة.",
   "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة.",
+  "fieldRequired": "هذا الحقل مطلوب.",
+  "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا.",
+  "invalidPassword": "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+  "invalidPhone": "أدخل رقم هاتف صحيحًا.",
+  "emailAlreadyInUse": "هذا البريد مسجّل بالفعل.",
+  "userDisabled": "تم تعطيل هذا الحساب.",
+  "tooManyRequests": "محاولات كثيرة. حاول مرة أخرى لاحقًا.",
+  "networkError": "خطأ في الشبكة. تحقق من الاتصال.",
+  "authFailed": "حدث خطأ. حاول مرة أخرى.",
   "registrationSuccess": "تم إنشاء الحساب بنجاح!",
   "selectRoom": "اختر غرفة",
   "selectDate": "اختر تاريخاً",
-  "selectTimeSlot": "اختر موعداً",
-  "skipLogin": "تخطي تسجيل الدخول (وضع تجريبي)"
+  "selectTimeSlot": "اختر موعداً"
 }

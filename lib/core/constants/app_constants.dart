@@ -19,5 +19,5 @@ abstract final class AppConstants {
   static const String usersCollection = 'users';
   static const String categoriesCollection = 'categories';
   static const String venuesCollection = 'venues';
-  static const String reservationsCollection = 'reservations';
+  static const String bookingsCollection = 'bookings';
 }

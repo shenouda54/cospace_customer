@@ -45,6 +45,6 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get venuesRef =>
       firestore.collection(AppConstants.venuesCollection);
 
-  CollectionReference<Map<String, dynamic>> get reservationsRef =>
-      firestore.collection(AppConstants.reservationsCollection);
+  CollectionReference<Map<String, dynamic>> get bookingsRef =>
+      firestore.collection(AppConstants.bookingsCollection);
 }

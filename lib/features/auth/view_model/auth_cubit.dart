@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cospace_customer/features/auth/model/auth_failure.dart';
 import 'package:cospace_customer/features/auth/model/auth_repository.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_state.dart';
 
@@ -25,9 +26,9 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
         phoneNumber: phoneNumber,
       );
-      emit(AuthAuthenticated(user));
-    } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthAuthenticated(user, isNewAccount: true));
+    } on AuthFailure catch (error) {
+      emit(AuthError(error.code));
     }
   }
 
@@ -43,25 +44,29 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
       );
       emit(AuthAuthenticated(user));
-    } catch (e) {
-      emit(AuthError(e.toString()));
+    } on AuthFailure catch (error) {
+      emit(AuthError(error.code));
     }
   }
 
   /// Logout the current customer.
   Future<void> logout() async {
+    emit(const AuthLoading());
     await _authRepository.logout();
     emit(const AuthUnauthenticated());
   }
 
-  /// Check saved session on app start.
+  /// Restore a saved session when the app starts.
   Future<void> checkAuthStatus() async {
-    final isLoggedIn = await _authRepository.isLoggedIn();
-    if (isLoggedIn) {
-      // User is still logged in but we don't have the model in memory.
-      // The app should navigate based on FirebaseAuth state.
-      emit(const AuthInitial());
-    } else {
+    emit(const AuthChecking());
+    try {
+      final user = await _authRepository.restoreSession();
+      if (user == null) {
+        emit(const AuthUnauthenticated());
+      } else {
+        emit(AuthAuthenticated(user));
+      }
+    } on AuthFailure {
       emit(const AuthUnauthenticated());
     }
   }

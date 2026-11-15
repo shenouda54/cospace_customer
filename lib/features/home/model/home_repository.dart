@@ -2,150 +2,91 @@ import 'package:cospace_customer/core/services/firebase_service.dart';
 import 'package:cospace_customer/features/home/model/category_model.dart';
 import 'package:cospace_customer/features/home/model/venue_model.dart';
 
-/// Repository for fetching categories and venues from Firestore
-/// with graceful fallback sample data for initial offline/demo preview.
+/// Loads categories and venues shared with the Vendor app.
 class HomeRepository {
-  final _firebase = FirebaseService.instance;
+  HomeRepository({FirebaseService? firebase})
+      : _firebase = firebase ?? FirebaseService.instance;
 
-  // ── Sample Data matching Project Specifications ──
-  static const List<CategoryModel> defaultCategories = [
-    CategoryModel(
-      id: 'cat_study',
-      name: 'Silent Study Rooms',
-      imageUrl: '',
-    ),
-    CategoryModel(
-      id: 'cat_podcast',
-      name: 'Podcast Studios',
-      imageUrl: '',
-    ),
-    CategoryModel(
-      id: 'cat_conference',
-      name: 'Executive Conference Rooms',
-      imageUrl: '',
-    ),
+  final FirebaseService _firebase;
+
+  static const List<CategoryModel> previewCategories = [
+    CategoryModel(id: 'cat_study', name: 'Silent Study Rooms'),
+    CategoryModel(id: 'cat_podcast', name: 'Podcast Studios'),
+    CategoryModel(id: 'cat_conference', name: 'Executive Conference Rooms'),
   ];
 
-  static const List<VenueModel> defaultVenues = [
+  static const List<VenueModel> previewVenues = [
     VenueModel(
       id: 'venue_1',
       name: 'The Hive Workspace',
       description:
-          'A modern, quiet workspace equipped with high-speed internet, ergonomic desks, and focused study pods.',
-      imageUrl: '',
-      location: 'Downtown, 5th Avenue',
+          'A quiet workspace with focused study rooms and fast internet.',
       categoryId: 'cat_study',
-      totalRooms: 6,
-      vendorId: 'vendor_101',
+      imageUrl: '',
+      roomsCount: 6,
+      lat: 30.0444,
+      lng: 31.2357,
     ),
     VenueModel(
       id: 'venue_2',
-      name: 'Silicon Hub Workstations',
-      description:
-          'Dedicated private desks and meeting rooms with audio isolation and creative environment.',
+      name: 'VoiceWave Audio Studio',
+      description: 'Soundproof podcast rooms with recording desks.',
+      categoryId: 'cat_podcast',
       imageUrl: '',
-      location: 'Tech District, Tower 3',
-      categoryId: 'cat_study',
-      totalRooms: 8,
-      vendorId: 'vendor_102',
+      roomsCount: 4,
+      lat: 30.0500,
+      lng: 31.2400,
     ),
     VenueModel(
       id: 'venue_3',
-      name: 'VoiceWave Audio Studio',
-      description:
-          'Professional podcast studio with soundproofing, condenser mics, and broadcast stations.',
-      imageUrl: '',
-      location: 'Media City, Building 12',
-      categoryId: 'cat_podcast',
-      totalRooms: 4,
-      vendorId: 'vendor_103',
-    ),
-    VenueModel(
-      id: 'venue_4',
       name: 'Summit Executive Suites',
-      description:
-          'Luxury conference rooms with smart presentation boards and ergonomic chairs for executive boards.',
-      imageUrl: '',
-      location: 'Financial Center, Floor 18',
+      description: 'Conference rooms for team meetings.',
       categoryId: 'cat_conference',
-      totalRooms: 6,
-      vendorId: 'vendor_104',
+      imageUrl: '',
+      roomsCount: 6,
+      lat: 30.0600,
+      lng: 31.2200,
     ),
   ];
 
-  /// Fetch all workspace categories.
   Future<List<CategoryModel>> fetchCategories() async {
-    if (!_firebase.isInitialized) {
-      return defaultCategories;
-    }
+    if (!_firebase.isInitialized) return previewCategories;
 
-    try {
-      final snapshot = await _firebase.categoriesRef.get();
-      if (snapshot.docs.isEmpty) {
-        return defaultCategories;
-      }
-      return snapshot.docs
-          .map((doc) => CategoryModel.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
-    } catch (_) {
-      return defaultCategories;
-    }
+    final snapshot = await _firebase.categoriesRef.get();
+    return snapshot.docs
+        .map((doc) => CategoryModel.fromJson({...doc.data(), 'id': doc.id}))
+        .toList();
   }
 
-  /// Fetch venues filtered by category ID.
-  Future<List<VenueModel>> fetchVenuesByCategory(String categoryId) async {
+  Future<List<VenueModel>> fetchVenues({
+    String? categoryId,
+    String? query,
+  }) async {
+    final trimmedQuery = query?.trim().toLowerCase() ?? '';
+
     if (!_firebase.isInitialized) {
-      return defaultVenues
-          .where((v) => v.categoryId == categoryId)
-          .toList();
+      return previewVenues.where((venue) {
+        final matchesCategory =
+            categoryId == null || venue.categoryId == categoryId;
+        final matchesQuery =
+            trimmedQuery.isEmpty || venue.name.toLowerCase().contains(trimmedQuery);
+        return matchesCategory && matchesQuery;
+      }).toList();
     }
 
-    try {
-      final snapshot = await _firebase.venuesRef
-          .where('categoryId', isEqualTo: categoryId)
-          .get();
-      if (snapshot.docs.isEmpty) {
-        return defaultVenues
-            .where((v) => v.categoryId == categoryId)
-            .toList();
-      }
-      return snapshot.docs
-          .map((doc) => VenueModel.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
-    } catch (_) {
-      return defaultVenues
-          .where((v) => v.categoryId == categoryId)
-          .toList();
-    }
-  }
+    final snapshot = categoryId == null
+        ? await _firebase.venuesRef.get()
+        : await _firebase.venuesRef
+            .where('categoryId', isEqualTo: categoryId)
+            .get();
 
-  /// Search venues by name (case-insensitive prefix match).
-  Future<List<VenueModel>> searchVenuesByName(String query) async {
-    final lower = query.toLowerCase().trim();
-    if (!_firebase.isInitialized) {
-      return defaultVenues
-          .where((v) => v.name.toLowerCase().contains(lower))
-          .toList();
-    }
+    final venues = snapshot.docs
+        .map((doc) => VenueModel.fromJson({...doc.data(), 'id': doc.id}))
+        .toList();
 
-    try {
-      final snapshot = await _firebase.venuesRef
-          .orderBy('name')
-          .startAt([lower])
-          .endAt(['$lower\uf8ff'])
-          .get();
-      if (snapshot.docs.isEmpty) {
-        return defaultVenues
-            .where((v) => v.name.toLowerCase().contains(lower))
-            .toList();
-      }
-      return snapshot.docs
-          .map((doc) => VenueModel.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
-    } catch (_) {
-      return defaultVenues
-          .where((v) => v.name.toLowerCase().contains(lower))
-          .toList();
-    }
+    if (trimmedQuery.isEmpty) return venues;
+    return venues
+        .where((venue) => venue.name.toLowerCase().contains(trimmedQuery))
+        .toList();
   }
 }

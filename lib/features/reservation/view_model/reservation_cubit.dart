@@ -1,167 +1,161 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cospace_customer/core/constants/app_constants.dart';
-import 'package:cospace_customer/core/services/firebase_service.dart';
-import 'package:cospace_customer/core/services/vendor_notification_dispatcher.dart';
-import 'package:cospace_customer/features/reservation/model/reservation_model.dart';
+import 'package:cospace_customer/core/utils/extensions/date_extensions.dart';
+import 'package:cospace_customer/features/reservation/model/booking_model.dart';
 import 'package:cospace_customer/features/reservation/model/reservation_repository.dart';
 import 'package:cospace_customer/features/reservation/view_model/reservation_state.dart';
 
-/// Cubit managing the reservation flow with real-time slot updates.
+/// Cubit for room selection and real-time slot booking.
 class ReservationCubit extends Cubit<ReservationState> {
   ReservationCubit({ReservationRepository? reservationRepository})
       : _repository = reservationRepository ?? ReservationRepository(),
         super(const ReservationInitial());
 
   final ReservationRepository _repository;
-  StreamSubscription? _reservationSubscription;
+  StreamSubscription<List<BookingModel>>? _bookingSubscription;
 
-  /// Start listening to real-time reservation updates for a venue and date.
-  void watchSlots({
-    required String venueId,
-    required String reservationDate,
-  }) {
-    _reservationSubscription?.cancel();
-    _reservationSubscription = _repository
-        .watchReservations(venueId: venueId, reservationDate: reservationDate)
+  /// Starts a booking session and listens to this venue's bookings.
+  void startBooking({required String venueId}) {
+    _bookingSubscription?.cancel();
+    emit(ReservationSlotsLoaded(
+      venueId: venueId,
+      bookings: const [],
+      selectedDate: DateTime.now().toFirestoreDate(),
+    ));
+
+    _bookingSubscription = _repository
+        .watchVenueBookings(venueId: venueId)
         .listen(
-      (reservations) {
-        final currentState = state;
-        if (currentState is ReservationSlotsLoaded) {
-          emit(currentState.copyWith(existingReservations: reservations));
-        } else {
-          emit(ReservationSlotsLoaded(existingReservations: reservations));
+      (bookings) {
+        final current = state;
+        if (current is ReservationSlotsLoaded && current.venueId == venueId) {
+          emit(current.copyWith(bookings: bookings));
         }
       },
-      onError: (error) => emit(ReservationError(error.toString())),
+      onError: (_) => _notify(BookingNotice.failed),
     );
   }
 
-  /// Select a room number.
+  void stopWatching() {
+    _bookingSubscription?.cancel();
+    _bookingSubscription = null;
+  }
+
   void selectRoomNumber(int roomNumber) {
-    final currentState = state;
-    if (currentState is ReservationSlotsLoaded) {
-      emit(currentState.copyWith(
-        selectedRoomNumber: roomNumber,
-        selectedTimeSlot: null, // Reset time slot when room changes
-      ));
-    }
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    emit(current.copyWith(
+      selectedRoomNumber: roomNumber,
+      clearTimeSlot: true,
+    ));
   }
 
-  /// Increment guest seats (max 6).
   void incrementGuestSeats() {
-    final currentState = state;
-    if (currentState is ReservationSlotsLoaded) {
-      if (currentState.seatsCount < AppConstants.maxSeatsPerRoom) {
-        emit(currentState.copyWith(
-          seatsCount: currentState.seatsCount + 1,
-        ));
-      }
-    }
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    if (current.seatsCount >= AppConstants.maxSeatsPerRoom) return;
+    emit(current.copyWith(seatsCount: current.seatsCount + 1));
   }
 
-  /// Decrement guest seats (min 1).
   void decrementGuestSeats() {
-    final currentState = state;
-    if (currentState is ReservationSlotsLoaded) {
-      if (currentState.seatsCount > AppConstants.minSeatsPerRoom) {
-        emit(currentState.copyWith(
-          seatsCount: currentState.seatsCount - 1,
-        ));
-      }
-    }
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    if (current.seatsCount <= AppConstants.minSeatsPerRoom) return;
+    emit(current.copyWith(seatsCount: current.seatsCount - 1));
   }
 
-  /// Select a date.
   void selectDate(String date) {
-    final currentState = state;
-    if (currentState is ReservationSlotsLoaded) {
-      emit(currentState.copyWith(selectedDate: date));
-    }
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    emit(current.copyWith(selectedDate: date, clearTimeSlot: true));
   }
 
-  /// Select a time slot.
   void selectTimeSlot(String timeSlot) {
-    final currentState = state;
-    if (currentState is ReservationSlotsLoaded) {
-      // Validate the slot is one of the fixed slots
-      if (!AppConstants.dailyFixedTimeSlots.contains(timeSlot)) return;
-
-      // Check it's not already booked
-      if (currentState.selectedRoomNumber != null &&
-          currentState.isSlotBooked(
-              currentState.selectedRoomNumber!, timeSlot)) {
-        return;
-      }
-
-      emit(currentState.copyWith(selectedTimeSlot: timeSlot));
-    }
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    if (!AppConstants.dailyFixedTimeSlots.contains(timeSlot)) return;
+    final roomNumber = current.selectedRoomNumber;
+    if (roomNumber == null) return;
+    if (current.isSlotBooked(roomNumber, timeSlot)) return;
+    emit(current.copyWith(selectedTimeSlot: timeSlot));
   }
 
-  /// Confirm the booking atomically.
   Future<void> confirmRealtimeBooking({
     required String venueId,
     required String venueName,
+    required String customerId,
   }) async {
-    final currentState = state;
-    if (currentState is! ReservationSlotsLoaded) return;
+    final current = state;
+    if (current is! ReservationSlotsLoaded || current.isSubmitting) return;
 
-    // ── Validation (Hostile Client Mindset) ──
-    final customerId =
-        FirebaseService.instance.currentUser?.uid ?? 'demo_customer_1';
-    if (currentState.selectedRoomNumber == null ||
-        currentState.selectedDate == null ||
-        currentState.selectedTimeSlot == null) {
-      emit(const ReservationError('Please complete all booking details.'));
+    if (customerId.isEmpty) {
+      _notify(BookingNotice.loginRequired);
       return;
     }
-    if (currentState.seatsCount < AppConstants.minSeatsPerRoom ||
-        currentState.seatsCount > AppConstants.maxSeatsPerRoom) {
-      emit(const ReservationError('Invalid seat count.'));
+    if (current.selectedRoomNumber == null ||
+        current.selectedDate == null ||
+        current.selectedTimeSlot == null) {
+      _notify(BookingNotice.incomplete);
       return;
     }
-    if (!AppConstants.dailyFixedTimeSlots
-        .contains(currentState.selectedTimeSlot)) {
-      emit(const ReservationError('Invalid time slot.'));
+    if (current.seatsCount < AppConstants.minSeatsPerRoom ||
+        current.seatsCount > AppConstants.maxSeatsPerRoom) {
+      _notify(BookingNotice.invalidSeats);
+      return;
+    }
+    if (!AppConstants.dailyFixedTimeSlots.contains(current.selectedTimeSlot)) {
+      _notify(BookingNotice.invalidSlot);
+      return;
+    }
+    if (current.isSlotBooked(
+      current.selectedRoomNumber!,
+      current.selectedTimeSlot!,
+    )) {
+      _notify(BookingNotice.slotTaken);
       return;
     }
 
-    emit(const ReservationLoading());
+    emit(current.copyWith(isSubmitting: true, clearNotice: true));
     try {
-      final reservation = ReservationModel(
-        id: '',
-        venueId: venueId,
-        venueName: venueName,
-        customerId: customerId,
-        roomNumber: currentState.selectedRoomNumber!,
-        seatsCount: currentState.seatsCount,
-        reservationDate: currentState.selectedDate!,
-        timeSlot: currentState.selectedTimeSlot!,
+      await _repository.bookRoomInRealTime(
+        BookingModel(
+          id: '',
+          venueId: venueId,
+          venueName: venueName,
+          customerId: customerId,
+          roomNumber: current.selectedRoomNumber!,
+          seatsCount: current.seatsCount,
+          date: current.selectedDate!,
+          timeSlot: current.selectedTimeSlot!,
+        ),
       );
-
-      await _repository.bookRoomInRealTime(reservation);
-
-      // Dispatch notification to Vendor app
-      await VendorNotificationDispatcher.instance.dispatchBookingNotification(
-        venueId: venueId,
-        venueName: venueName,
-        customerName: '', // Will be filled from user profile
-        roomNumber: currentState.selectedRoomNumber!,
-        reservationDate: currentState.selectedDate!,
-        timeSlot: currentState.selectedTimeSlot!,
-      );
-
-      emit(const ReservationBookingSuccess());
+      _notify(BookingNotice.success, isSubmitting: false);
     } on SlotAlreadyBookedException {
-      emit(const ReservationError('This time slot is already booked.'));
-    } catch (e) {
-      emit(ReservationError(e.toString()));
+      _notify(BookingNotice.slotTaken, isSubmitting: false, clearTimeSlot: true);
+    } catch (_) {
+      _notify(BookingNotice.failed, isSubmitting: false);
     }
+  }
+
+  void _notify(
+    BookingNotice notice, {
+    bool isSubmitting = false,
+    bool clearTimeSlot = false,
+  }) {
+    final current = state;
+    if (current is! ReservationSlotsLoaded) return;
+    emit(current.copyWith(
+      notice: notice,
+      noticeId: current.noticeId + 1,
+      isSubmitting: isSubmitting,
+      clearTimeSlot: clearTimeSlot,
+    ));
   }
 
   @override
   Future<void> close() {
-    _reservationSubscription?.cancel();
+    _bookingSubscription?.cancel();
     return super.close();
   }
 }

@@ -1,71 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:cospace_customer/core/constants/app_constants.dart';
-import 'package:cospace_customer/core/constants/app_sizes.dart';
 import 'package:cospace_customer/core/constants/app_fonts.dart';
+import 'package:cospace_customer/core/constants/app_sizes.dart';
+import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
 import 'package:cospace_customer/features/reservation/view_model/reservation_state.dart';
 
-/// Wrap of time-slot chips matching Figure 4.
-/// Available slots are clickable; selected slot is elevated with shadow;
-/// booked slots are disabled in real-time.
+/// Fixed daily slots. A slot already stored for the selected room and date is disabled.
 class RealtimeTimeSlotsWrap extends StatelessWidget {
   const RealtimeTimeSlotsWrap({
     super.key,
-    required this.roomNumber,
     required this.state,
     required this.onSlotSelected,
   });
 
-  final int roomNumber;
   final ReservationSlotsLoaded? state;
   final ValueChanged<String> onSlotSelected;
 
   @override
   Widget build(BuildContext context) {
+    final roomNumber = state?.selectedRoomNumber;
+
     return Wrap(
       spacing: AppSizes.p12,
       runSpacing: AppSizes.v12,
       children: AppConstants.dailyFixedTimeSlots.map((slot) {
-        final isBooked = state?.isSlotBooked(roomNumber, slot) ?? false;
-        final isSelected = state?.selectedTimeSlot == slot;
+        final isBooked = roomNumber != null &&
+            (state?.isSlotBooked(roomNumber, slot) ?? false);
+        final isSelected = state?.selectedTimeSlot == slot && !isBooked;
+        final canSelect = roomNumber != null && !isBooked;
+
+        final background = isSelected
+            ? context.colorScheme.primary
+            : isBooked
+                ? context.colorScheme.surfaceContainerHighest
+                : context.colorScheme.surface;
+        final foreground = isSelected
+            ? context.colorScheme.onPrimary
+            : isBooked
+                ? context.colorScheme.onSurface.withValues(alpha: 0.38)
+                : context.colorScheme.onSurface;
 
         return GestureDetector(
-          onTap: isBooked ? null : () => onSlotSelected(slot),
+          onTap: canSelect ? () => onSlotSelected(slot) : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            padding: EdgeInsetsDirectional.symmetric(
+              horizontal: AppSizes.p20,
+              vertical: AppSizes.v12,
+            ),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? Theme.of(context).colorScheme.surface
-                  : isBooked
-                      ? const Color(0xFFF2F4F7)
-                      : const Color(0xFFF4F6F9),
+              color: background,
               borderRadius: BorderRadius.circular(AppSizes.r12),
-              border: isSelected
-                  ? Border.all(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      width: 1.5,
-                    )
-                  : null,
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
+              border: Border.all(
+                color: isSelected
+                    ? context.colorScheme.primary
+                    : context.colorScheme.outline,
+              ),
             ),
             child: Text(
               slot,
               style: TextStyle(
                 fontSize: AppFonts.bodyMedium,
                 fontWeight: isSelected ? AppFonts.bold : AppFonts.medium,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.onSurface
-                    : isBooked
-                        ? const Color(0xFFBAC2CE)
-                        : const Color(0xFF8C98A8),
+                color: foreground,
               ),
             ),
           ),

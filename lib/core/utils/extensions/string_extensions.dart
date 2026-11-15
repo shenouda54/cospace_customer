@@ -11,4 +11,10 @@ extension StringExtensions on String {
 
   /// Whether the string is a strong password (min 6 chars).
   bool get isValidPassword => length >= 6;
+
+  /// Whether the string is a phone number with 8 to 15 digits.
+  bool get isValidPhone {
+    final digits = replaceAll(RegExp(r'\D'), '');
+    return digits.length >= 8 && digits.length <= 15;
+  }
 }

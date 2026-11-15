@@ -14,6 +14,8 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.textInputAction,
+    this.suffixIcon,
+    this.onFieldSubmitted,
   });
 
   final TextEditingController controller;
@@ -23,6 +25,8 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
+  final Widget? suffixIcon;
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +36,7 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       validator: validator,
+      onFieldSubmitted: onFieldSubmitted,
       style: TextStyle(
         fontSize: AppFonts.bodyMedium,
         color: context.colorScheme.onSurface,
@@ -45,6 +50,7 @@ class CustomTextField extends StatelessWidget {
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, size: AppSizes.iconMedium)
             : null,
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: context.colorScheme.surface,
         contentPadding: EdgeInsetsDirectional.symmetric(

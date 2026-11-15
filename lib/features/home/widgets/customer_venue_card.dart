@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cospace_customer/core/constants/app_icons.dart';
 import 'package:cospace_customer/core/constants/app_sizes.dart';
 import 'package:cospace_customer/core/constants/app_fonts.dart';
 import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
 import 'package:cospace_customer/features/home/model/venue_model.dart';
+import 'package:cospace_customer/features/home/widgets/venue_image.dart';
 import 'package:cospace_customer/features/reservation/view/venue_details_screen.dart';
 
 /// Card displaying a venue summary in the home list.
@@ -32,20 +34,14 @@ class CustomerVenueCard extends StatelessWidget {
         child: Row(
           children: [
             // Venue Image
-            ClipRRect(
+            VenueImage(
+              imageUrl: venue.imageUrl,
+              width: 100.w,
+              height: 100.w,
               borderRadius: BorderRadiusDirectional.only(
                 topStart: Radius.circular(AppSizes.r12),
                 bottomStart: Radius.circular(AppSizes.r12),
               ),
-              child: venue.imageUrl.isNotEmpty
-                  ? Image.network(
-                      venue.imageUrl,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _imagePlaceholder(context),
-                    )
-                  : _imagePlaceholder(context),
             ),
             SizedBox(width: AppSizes.p12),
             // Venue Info
@@ -79,7 +75,7 @@ class CustomerVenueCard extends StatelessWidget {
                         SizedBox(width: AppSizes.p4),
                         Expanded(
                           child: Text(
-                            venue.location,
+                            venue.coordinatesLabel,
                             style: TextStyle(
                               fontSize: AppFonts.bodySmall,
                               color: context.colorScheme.onSurface
@@ -102,7 +98,7 @@ class CustomerVenueCard extends StatelessWidget {
                         ),
                         SizedBox(width: AppSizes.p4),
                         Text(
-                          '${venue.totalRooms} ${context.l10n.rooms}',
+                          '${venue.roomsCount} ${context.l10n.rooms}',
                           style: TextStyle(
                             fontSize: AppFonts.bodySmall,
                             color: context.colorScheme.onSurface
@@ -126,19 +122,6 @@ class CustomerVenueCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _imagePlaceholder(BuildContext context) {
-    return Container(
-      width: 100,
-      height: 100,
-      color: context.colorScheme.surfaceContainerHighest,
-      child: Icon(
-        AppIcons.room,
-        size: AppSizes.iconLarge,
-        color: context.colorScheme.onSurface.withValues(alpha: 0.38),
       ),
     );
   }

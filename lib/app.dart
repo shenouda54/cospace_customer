@@ -6,7 +6,7 @@ import 'package:cospace_customer/core/constants/app_sizes.dart';
 import 'package:cospace_customer/core/theme/app_theme.dart';
 import 'package:cospace_customer/core/theme/theme_cubit.dart';
 import 'package:cospace_customer/core/utils/locale_cubit.dart';
-import 'package:cospace_customer/features/auth/view/login_screen.dart';
+import 'package:cospace_customer/features/auth/view/auth_gate.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_cubit.dart';
 import 'package:cospace_customer/features/home/view_model/home_cubit.dart';
 import 'package:cospace_customer/features/reservation/view_model/reservation_cubit.dart';
@@ -62,7 +62,7 @@ class CoSpaceCustomerApp extends StatelessWidget {
                       );
                     },
 
-                    home: const LoginScreen(),
+                    home: const AuthGate(),
                   );
                 },
               );

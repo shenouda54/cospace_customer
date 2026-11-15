@@ -1,5 +1,16 @@
 import 'package:equatable/equatable.dart';
-import 'package:cospace_customer/features/reservation/model/reservation_model.dart';
+import 'package:cospace_customer/features/reservation/model/booking_model.dart';
+
+/// One-shot result of a booking attempt, shown by the screen listener.
+enum BookingNotice {
+  success,
+  slotTaken,
+  incomplete,
+  invalidSeats,
+  invalidSlot,
+  loginRequired,
+  failed,
+}
 
 /// Reservation screen states.
 abstract class ReservationState extends Equatable {
@@ -13,67 +24,77 @@ class ReservationInitial extends ReservationState {
   const ReservationInitial();
 }
 
-class ReservationLoading extends ReservationState {
-  const ReservationLoading();
-}
-
 class ReservationSlotsLoaded extends ReservationState {
-  final List<ReservationModel> existingReservations;
+  final String venueId;
+  final List<BookingModel> bookings;
   final int? selectedRoomNumber;
   final int seatsCount;
   final String? selectedDate;
   final String? selectedTimeSlot;
+  final bool isSubmitting;
+  final BookingNotice? notice;
+  final int noticeId;
 
   const ReservationSlotsLoaded({
-    required this.existingReservations,
+    required this.venueId,
+    required this.bookings,
     this.selectedRoomNumber,
     this.seatsCount = 1,
     this.selectedDate,
     this.selectedTimeSlot,
+    this.isSubmitting = false,
+    this.notice,
+    this.noticeId = 0,
   });
 
   @override
   List<Object?> get props => [
-        existingReservations,
+        venueId,
+        bookings,
         selectedRoomNumber,
         seatsCount,
         selectedDate,
         selectedTimeSlot,
+        isSubmitting,
+        notice,
+        noticeId,
       ];
 
   ReservationSlotsLoaded copyWith({
-    List<ReservationModel>? existingReservations,
+    List<BookingModel>? bookings,
     int? selectedRoomNumber,
     int? seatsCount,
     String? selectedDate,
     String? selectedTimeSlot,
+    bool clearTimeSlot = false,
+    bool? isSubmitting,
+    BookingNotice? notice,
+    bool clearNotice = false,
+    int? noticeId,
   }) {
     return ReservationSlotsLoaded(
-      existingReservations:
-          existingReservations ?? this.existingReservations,
+      venueId: venueId,
+      bookings: bookings ?? this.bookings,
       selectedRoomNumber: selectedRoomNumber ?? this.selectedRoomNumber,
       seatsCount: seatsCount ?? this.seatsCount,
       selectedDate: selectedDate ?? this.selectedDate,
-      selectedTimeSlot: selectedTimeSlot ?? this.selectedTimeSlot,
+      selectedTimeSlot:
+          clearTimeSlot ? null : (selectedTimeSlot ?? this.selectedTimeSlot),
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      notice: clearNotice ? null : (notice ?? this.notice),
+      noticeId: noticeId ?? this.noticeId,
     );
   }
 
-  /// Check if a specific room+slot combo is already booked.
+  /// A slot is taken when this room is already booked on the selected date.
   bool isSlotBooked(int roomNumber, String timeSlot) {
-    return existingReservations.any(
-      (r) => r.roomNumber == roomNumber && r.timeSlot == timeSlot,
+    final date = selectedDate;
+    if (date == null) return false;
+    return bookings.any(
+      (booking) =>
+          booking.roomNumber == roomNumber &&
+          booking.date == date &&
+          booking.timeSlot == timeSlot,
     );
   }
-}
-
-class ReservationBookingSuccess extends ReservationState {
-  const ReservationBookingSuccess();
-}
-
-class ReservationError extends ReservationState {
-  final String message;
-  const ReservationError(this.message);
-
-  @override
-  List<Object?> get props => [message];
 }

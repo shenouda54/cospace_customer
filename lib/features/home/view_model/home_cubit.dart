@@ -10,7 +10,6 @@ class HomeCubit extends Cubit<HomeState> {
 
   final HomeRepository _homeRepository;
 
-  /// Load all categories and the venues of the first category.
   Future<void> loadCategories() async {
     emit(const HomeLoading());
     try {
@@ -21,55 +20,53 @@ class HomeCubit extends Cubit<HomeState> {
       }
 
       final firstCategoryId = categories.first.id;
-      final venues =
-          await _homeRepository.fetchVenuesByCategory(firstCategoryId);
-
+      final venues = await _homeRepository.fetchVenues(
+        categoryId: firstCategoryId,
+      );
       emit(HomeLoaded(
         categories: categories,
         venues: venues,
         selectedCategoryId: firstCategoryId,
       ));
-    } catch (e) {
-      emit(HomeError(e.toString()));
+    } catch (error) {
+      emit(HomeError(error.toString()));
     }
   }
 
-  /// Select a category and load its venues.
   Future<void> selectCategory(String categoryId) async {
-    final currentState = state;
-    if (currentState is! HomeLoaded) return;
+    final current = state;
+    if (current is! HomeLoaded) return;
 
-    emit(const HomeLoading());
     try {
-      final venues =
-          await _homeRepository.fetchVenuesByCategory(categoryId);
-      emit(currentState.copyWith(
+      final venues = await _homeRepository.fetchVenues(categoryId: categoryId);
+      emit(current.copyWith(
         venues: venues,
         selectedCategoryId: categoryId,
+        searchQuery: '',
       ));
-    } catch (e) {
-      emit(HomeError(e.toString()));
+    } catch (error) {
+      emit(HomeError(error.toString()));
     }
   }
 
-  /// Search venues by name.
   Future<void> searchVenuesByName(String query) async {
-    final currentState = state;
-    if (currentState is! HomeLoaded) return;
+    final current = state;
+    if (current is! HomeLoaded) return;
 
-    if (query.isEmpty) {
-      if (currentState.selectedCategoryId != null) {
-        await selectCategory(currentState.selectedCategoryId!);
-      }
-      return;
-    }
-
-    emit(const HomeLoading());
+    final trimmed = query.trim();
     try {
-      final venues = await _homeRepository.searchVenuesByName(query);
-      emit(currentState.copyWith(venues: venues));
-    } catch (e) {
-      emit(HomeError(e.toString()));
+      if (trimmed.isEmpty) {
+        final venues = await _homeRepository.fetchVenues(
+          categoryId: current.selectedCategoryId,
+        );
+        emit(current.copyWith(venues: venues, searchQuery: ''));
+        return;
+      }
+
+      final venues = await _homeRepository.fetchVenues(query: trimmed);
+      emit(current.copyWith(venues: venues, searchQuery: trimmed));
+    } catch (error) {
+      emit(HomeError(error.toString()));
     }
   }
 }
