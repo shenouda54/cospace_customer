@@ -129,6 +129,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get invalidCredentials => 'بريد إلكتروني أو كلمة مرور غير صحيحة.';
 
   @override
+  String get fieldRequired => 'هذا الحقل مطلوب.';
+
+  @override
+  String get invalidEmail => 'أدخل بريدًا إلكترونيًا صحيحًا.';
+
+  @override
+  String get invalidPassword => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.';
+
+  @override
+  String get invalidPhone => 'أدخل رقم هاتف صحيحًا.';
+
+  @override
+  String get emailAlreadyInUse => 'هذا البريد مسجّل بالفعل.';
+
+  @override
+  String get userDisabled => 'تم تعطيل هذا الحساب.';
+
+  @override
+  String get tooManyRequests => 'محاولات كثيرة. حاول مرة أخرى لاحقًا.';
+
+  @override
+  String get networkError => 'خطأ في الشبكة. تحقق من الاتصال.';
+
+  @override
+  String get authFailed => 'حدث خطأ. حاول مرة أخرى.';
+
+  @override
   String get registrationSuccess => 'تم إنشاء الحساب بنجاح!';
 
   @override
@@ -141,5 +168,5 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectTimeSlot => 'اختر موعداً';
 
   @override
-  String get skipLogin => 'تخطي تسجيل الدخول (وضع تجريبي)';
+  String get skip => 'تخطي';
 }

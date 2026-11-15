@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cospace_customer/core/constants/app_icons.dart';
 import 'package:cospace_customer/core/constants/app_sizes.dart';
 import 'package:cospace_customer/core/constants/app_fonts.dart';
 import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
 import 'package:cospace_customer/features/home/model/venue_model.dart';
-import 'package:cospace_customer/features/home/widgets/venue_image.dart';
 import 'package:cospace_customer/features/reservation/view/venue_details_screen.dart';
 
 /// Card displaying a venue summary in the home list.
@@ -34,15 +32,12 @@ class CustomerVenueCard extends StatelessWidget {
         child: Row(
           children: [
             // Venue Image
-            VenueImage(
-              imageUrl: venue.imageUrl,
-              width: 100.w,
-              height: 100.w,
-              borderRadius: BorderRadiusDirectional.only(
-                topStart: Radius.circular(AppSizes.r12),
-                bottomStart: Radius.circular(AppSizes.r12),
-              ),
-            ),
+            // VenueImage(
+            //   imageUrl: venue.imageUrl,
+            //   width: 100.w,
+            //   height: 100.w,
+            //   borderRadius: ( ),
+            // ),
             SizedBox(width: AppSizes.p12),
             // Venue Info
             Expanded(

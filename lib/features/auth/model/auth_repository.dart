@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cospace_customer/core/services/firebase_service.dart';
 import 'package:cospace_customer/core/storage/local_keys.dart';

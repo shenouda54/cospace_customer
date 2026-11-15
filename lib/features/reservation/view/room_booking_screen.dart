@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cospace_customer/core/constants/app_fonts.dart';
 import 'package:cospace_customer/core/constants/app_icons.dart';
 import 'package:cospace_customer/core/constants/app_sizes.dart';
+import 'package:cospace_customer/core/services/firebase_service.dart';
 import 'package:cospace_customer/core/utils/extensions/context_extensions.dart';
-import 'package:cospace_customer/core/utils/extensions/date_extensions.dart';
+import 'package:cospace_customer/features/auth/view_model/auth_cubit.dart';
+import 'package:cospace_customer/features/auth/view_model/auth_state.dart';
 import 'package:cospace_customer/features/home/model/venue_model.dart';
 import 'package:cospace_customer/features/reservation/view_model/reservation_cubit.dart';
 import 'package:cospace_customer/features/reservation/view_model/reservation_state.dart';
@@ -32,13 +34,37 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
   @override
   void initState() {
     super.initState();
-    // Start watching today's reservations for this venue by default
-    final today = DateTime.now().toFirestoreDate();
-    context.read<ReservationCubit>().watchSlots(
-          venueId: widget.venue.id,
-          reservationDate: today,
-        );
-    context.read<ReservationCubit>().selectDate(today);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<ReservationCubit>();
+      cubit.startBooking(venueId: widget.venue.id);
+      cubit.selectRoomNumber(widget.roomNumber);
+    });
+  }
+
+  @override
+  void dispose() {
+    // Don't cancel here — the cubit lives above this screen.
+    super.dispose();
+  }
+
+  String _noticeMessage(BuildContext context, BookingNotice notice) {
+    switch (notice) {
+      case BookingNotice.success:
+        return context.l10n.bookingSuccess;
+      case BookingNotice.slotTaken:
+        return context.l10n.slotAlreadyBooked;
+      case BookingNotice.incomplete:
+        return context.l10n.selectTimeSlot;
+      case BookingNotice.invalidSeats:
+        return context.l10n.maxSeatsReached;
+      case BookingNotice.invalidSlot:
+        return context.l10n.selectTimeSlot;
+      case BookingNotice.loginRequired:
+        return context.l10n.loginRequired;
+      case BookingNotice.failed:
+        return context.l10n.bookingFailed;
+    }
   }
 
   @override
@@ -52,15 +78,27 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
         ),
       ),
       body: BlocConsumer<ReservationCubit, ReservationState>(
+        listenWhen: (previous, current) {
+          if (current is! ReservationSlotsLoaded) return false;
+          if (previous is! ReservationSlotsLoaded) return current.notice != null;
+          return current.notice != null &&
+              current.noticeId != previous.noticeId;
+        },
         listener: (context, state) {
-          if (state is ReservationBookingSuccess) {
+          if (state is! ReservationSlotsLoaded || state.notice == null) return;
+          final notice = state.notice!;
+          if (notice == BookingNotice.success) {
             context.showSnackBar(context.l10n.bookingSuccess);
             Navigator.of(context).pop();
-          } else if (state is ReservationError) {
-            context.showSnackBar(state.message, isError: true);
+          } else {
+            context.showSnackBar(
+              _noticeMessage(context, notice),
+              isError: true,
+            );
           }
         },
         builder: (context, state) {
+          final loaded = state is ReservationSlotsLoaded ? state : null;
           return SingleChildScrollView(
             padding: EdgeInsetsDirectional.all(AppSizes.p16),
             child: Column(
@@ -77,9 +115,7 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                 ),
                 SizedBox(height: AppSizes.v12),
                 GuestsSeatCounter(
-                  currentCount: state is ReservationSlotsLoaded
-                      ? state.seatsCount
-                      : 1,
+                  currentCount: loaded?.seatsCount ?? 1,
                   onIncrement: () =>
                       context.read<ReservationCubit>().incrementGuestSeats(),
                   onDecrement: () =>
@@ -98,15 +134,9 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                 ),
                 SizedBox(height: AppSizes.v12),
                 ReservationDatePicker(
-                  selectedDate: state is ReservationSlotsLoaded
-                      ? state.selectedDate
-                      : null,
+                  selectedDate: loaded?.selectedDate,
                   onDateSelected: (date) {
                     context.read<ReservationCubit>().selectDate(date);
-                    context.read<ReservationCubit>().watchSlots(
-                          venueId: widget.venue.id,
-                          reservationDate: date,
-                        );
                   },
                 ),
                 SizedBox(height: AppSizes.v24),
@@ -122,8 +152,7 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                 ),
                 SizedBox(height: AppSizes.v12),
                 RealtimeTimeSlotsWrap(
-                  roomNumber: widget.roomNumber,
-                  state: state is ReservationSlotsLoaded ? state : null,
+                  state: loaded,
                   onSlotSelected: (slot) {
                     context.read<ReservationCubit>().selectTimeSlot(slot);
                   },
@@ -133,11 +162,16 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                 // ── Confirm Booking Button ──
                 CustomButton(
                   text: context.l10n.confirmBooking,
-                  isLoading: state is ReservationLoading,
+                  isLoading: loaded?.isSubmitting ?? false,
                   onPressed: () {
+                    final authState = context.read<AuthCubit>().state;
+                    final customerId = authState is AuthAuthenticated
+                        ? authState.user.uid
+                        : (FirebaseService.instance.currentUser?.uid ?? '');
                     context.read<ReservationCubit>().confirmRealtimeBooking(
                           venueId: widget.venue.id,
                           venueName: widget.venue.name,
+                          customerId: customerId,
                         );
                   },
                 ),

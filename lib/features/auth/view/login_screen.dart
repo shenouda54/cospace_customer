@@ -78,17 +78,46 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   SizedBox(height: AppSizes.v16),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: Text(context.l10n.dontHaveAccount),
+                      ),
+                      // TODO: Home هتتشال بعد ما نخلص
+                      Padding(
+                        padding: EdgeInsetsDirectional.symmetric(
+                          horizontal: AppSizes.p4,
+                        ),
+                        child: Text(
+                          '•',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
                           ),
-                        );
-                      },
-                      child: Text(context.l10n.dontHaveAccount),
-                    ),
+                        ),
+                      ),
+                      // TODO: Home هتتشال بعد ما نخلص
+                      TextButton(
+                        onPressed: () {
+                          context.read<AuthCubit>().skipLogin();
+                        },
+                        child: Text(
+                          context.l10n.skip,
+                          style: TextStyle(
+                            color: context.colorScheme.primary,
+                            fontWeight: AppFonts.semiBold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

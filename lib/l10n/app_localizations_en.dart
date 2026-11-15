@@ -129,6 +129,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidCredentials => 'Invalid email or password.';
 
   @override
+  String get fieldRequired => 'This field is required.';
+
+  @override
+  String get invalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get invalidPassword => 'Password must be at least 6 characters.';
+
+  @override
+  String get invalidPhone => 'Enter a valid phone number.';
+
+  @override
+  String get emailAlreadyInUse => 'This email is already registered.';
+
+  @override
+  String get userDisabled => 'This account has been disabled.';
+
+  @override
+  String get tooManyRequests => 'Too many attempts. Try again later.';
+
+  @override
+  String get networkError => 'Network error. Check your connection.';
+
+  @override
+  String get authFailed => 'Something went wrong. Please try again.';
+
+  @override
   String get registrationSuccess => 'Account created successfully!';
 
   @override
@@ -141,5 +168,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectTimeSlot => 'Select a time slot';
 
   @override
-  String get skipLogin => 'Skip (Demo / Test Mode)';
+  String get skip => 'Skip';
 }

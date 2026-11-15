@@ -338,6 +338,60 @@ abstract class AppLocalizations {
   /// **'Invalid email or password.'**
   String get invalidCredentials;
 
+  /// No description provided for @fieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required.'**
+  String get fieldRequired;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get invalidEmail;
+
+  /// No description provided for @invalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters.'**
+  String get invalidPassword;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number.'**
+  String get invalidPhone;
+
+  /// No description provided for @emailAlreadyInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'This email is already registered.'**
+  String get emailAlreadyInUse;
+
+  /// No description provided for @userDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has been disabled.'**
+  String get userDisabled;
+
+  /// No description provided for @tooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Try again later.'**
+  String get tooManyRequests;
+
+  /// No description provided for @networkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your connection.'**
+  String get networkError;
+
+  /// No description provided for @authFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authFailed;
+
   /// No description provided for @registrationSuccess.
   ///
   /// In en, this message translates to:
@@ -362,11 +416,11 @@ abstract class AppLocalizations {
   /// **'Select a time slot'**
   String get selectTimeSlot;
 
-  /// No description provided for @skipLogin.
+  /// No description provided for @skip.
   ///
   /// In en, this message translates to:
-  /// **'Skip (Demo / Test Mode)'**
-  String get skipLogin;
+  /// **'Skip'**
+  String get skip;
 }
 
 class _AppLocalizationsDelegate

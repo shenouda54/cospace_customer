@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cospace_customer/features/auth/model/auth_failure.dart';
 import 'package:cospace_customer/features/auth/model/auth_repository.dart';
+import 'package:cospace_customer/features/auth/model/customer_user_model.dart';
 import 'package:cospace_customer/features/auth/view_model/auth_state.dart';
 
 /// Cubit managing authentication state for the customer.
@@ -10,6 +11,21 @@ class AuthCubit extends Cubit<AuthState> {
         super(const AuthInitial());
 
   final AuthRepository _authRepository;
+
+  /// Skips authentication temporarily for testing/development.
+  // TODO: هتتشال بعد ما نخلص الهوم
+  void skipLogin() {
+    emit(
+      const AuthAuthenticated(
+        CustomerUserModel(
+          uid: 'guest_user',
+          fullName: 'Guest User',
+          email: 'guest@cospace.com',
+          phoneNumber: '',
+        ),
+      ),
+    );
+  }
 
   /// Register a new customer.
   Future<void> register({
